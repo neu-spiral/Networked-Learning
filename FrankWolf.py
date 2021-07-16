@@ -1,6 +1,7 @@
 import cvxpy as cp
 import pickle
 import numpy as np
+from ProbGenerate import Problem
 
 class FrankWolf:
 
@@ -130,13 +131,13 @@ class FrankWolf:
                 D[l][i]= D[l][i].value
         return D
 
-    def objective(self, n):
-        obj = 0
-        for l in self.learners:
-            g = 0
-            for i in self.catalog:
-                g += n[l][i]*np.dot(self.features[i], np.linalg.inv(self.features[i]))
-            obj += np.log(np.linalg.det(g + self.prior['delta']**2 * self.prior['sigma']))
+    def objG(self, n, l):
+        temp = 0
+        for i in self.catalog:
+            temp += n[l][i]*np.dot(self.features[i], self.features[i].transpose())
+        temp = np.linalg.det(temp + self.prior['noice'] ** 2 * self.prior['cov'][l])
+        obj = np.log(temp)
+        return obj
 
     def generate_sample(self, Y, samples, T):
         N = []
@@ -152,46 +153,58 @@ class FrankWolf:
     def Estimate_Gradient(self, Y, head, samples, T):
 
         L, I = self.problem_size
-        Z = np.matlib.zeros(self.problem_size)
+        # Z = np.zeros(self.problem_size)
+        Z = {}
+        for l in self.learners:
+            Z[l] = {}
+            for i in self.catalog:
+                Z[l][i] = 0
         N = self.generate_sample(Y, samples, T)
-        for l in range(L):
-            for i in range(I):
+        for l in self.learners:
+            for i in self.catalog:
                 gradient = 0
                 for t in range(head):
                     obj1 = 0
                     obj2 = 0
                     for j in range(samples):
-                        n1 = N[t]
+                        n1 = N[j]
                         n1[l][i] = t+1
-                        obj1 += self.objective(n1)
-                        n2 = N[t]
+                        obj1 += self.objG(n1, l)
+                        n2 = N[j]
                         n2[l][i] = t
-                        obj2 += self.objective(n2)
+                        obj2 += self.objG(n2, l)
                     obj1 /= samples
                     obj2 /= samples
                     gradient += (obj1 - obj2) * Y[l][i]**t * T**(t+1) / np.math.factorial(t) * np.exp(-Y[l][i]*T)
                 Z[l][i] = gradient
         return Z
 
+    def adapt(self, Y, D, gamma):
+        for l in self.learners:
+            for i in self.catalog:
+                Y[l][i] += gamma * D[l][i]
 
     def FW(self, iterations, head, samples, T, routing):
-        def adapt(Y, D, gamma):
-            for l in D:
-                for i in D[l]:
-                    Y[l][i] += gamma
 
-        Y = np.matlib.zeros(self.problem_size)
+
+        # Y = np.zeros(self.problem_size)
+        Y = {}
+        for l in self.learners:
+            Y[l] = {}
+            for i in self.catalog:
+                Y[l][i] = 0
         gamma = 1. / iterations
         for t in range(iterations):
             Z = self.Estimate_Gradient(Y, head, samples, T)
             D = self.find_max(Z, routing)
-            adapt(Y, D, gamma)
+            self.adapt(Y, D, gamma)
 
         return Y
 
 
 if __name__ == '__main__':
-    fname = ''
+    fname = 'Problem'
     with open(fname, 'rb') as f:
         P = pickle.load(f)
-    FrankWolf(P)
+    alg = FrankWolf(P)
+    Y = alg.FW(100, 100, 10, 10, 'hop')
