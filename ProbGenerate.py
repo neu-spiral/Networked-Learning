@@ -145,9 +145,17 @@ def main():
     prior['noice'] = args.noice
     prior['cov'] = {}
     for l in learners:
-        # covariance is symmetric
-        prior['cov'][l] = np.random.rand(dimension, dimension)
-        prior['cov'][l] = prior['cov'][l] + prior['cov'][l].transpose()
+        # covariance is PSD
+
+        A = np.random.rand(dimension, dimension)
+        B = np.dot(A, A.transpose())
+        C = B + B.T  # makesure symmetric
+
+        prior['cov'][l] = C
+
+        # matrix = np.random.rand(dimension, 1)
+        # prior['cov'][l] = np.dot(matrix, matrix.transpose())
+
 
     P = Problem(sources, learners, catalog, bandwidth, G, [], features, prior)
     fname = 'Problem'

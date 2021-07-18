@@ -2,6 +2,8 @@ import cvxpy as cp
 import pickle
 import numpy as np
 from ProbGenerate import Problem
+import copy
+
 
 class FrankWolf:
 
@@ -16,19 +18,18 @@ class FrankWolf:
         self.features = P.features
         self.prior = P.prior
 
-
-    def find_max(self, Z, routing):
+    def find_max(self, Z, routing='hop'):
         """
         Solve a linear programing given gradient Z
         Z: a dictionary
         routing: 'hop' or 'source'
         return: a dictionary
         """
-        D ={}
+        D = {}
         for l in self.learners:
             D[l] = {}
             for i in self.catalog:
-                D[l][i]= cp.Variable()
+                D[l][i] = cp.Variable()
 
         constr = []
         if routing == 'hop':
@@ -62,11 +63,17 @@ class FrankWolf:
                         for e in in_edges:
                             in_flow[v][i] += D[e][i]
                         constr.append(in_flow[v][i] == D[v][i])
+                        for e in out_edges:
+                            out_flow[v][i] += D[e][i]
+                        constr.append(out_flow[v][i] == 0)
 
                     elif v in self.sources:
                         for e in out_edges:
                             out_flow[v][i] += D[e][i]
                         constr.append(out_flow[v][i] <= self.sources[v][i])
+                        for e in in_edges:
+                            in_flow[v][i] += D[e][i]
+                        constr.append(in_flow[v][i] == 0)
 
                     else:
                         for e in in_edges:
@@ -120,21 +127,24 @@ class FrankWolf:
         obj = 0
         for l in self.learners:
             for i in self.catalog:
-                obj += D[l][i]*Z[l][i]
+                obj += D[l][i] * Z[l][i]
 
-
-        self.problem = cp.Problem(cp.Maximize(obj),constr)
+        self.problem = cp.Problem(cp.Maximize(obj), constr)
         self.problem.solve()
+        print("status:", self.problem.status)
 
         for l in self.learners:
             for i in self.catalog:
-                D[l][i]= D[l][i].value
+                D[l][i] = D[l][i].value if D[l][i].value>=0 else 0.
+        for e in self.G.edges():
+            for i in self.catalog:
+                D[e][i] = D[e][i].value if D[e][i].value>=0 else 0.
         return D
 
     def objG(self, n, l):
         temp = 0
         for i in self.catalog:
-            temp += n[l][i]*np.dot(self.features[i], self.features[i].transpose())
+            temp += n[l][i] * np.dot(self.features[i], self.features[i].transpose())
         temp = np.linalg.det(temp + self.prior['noice'] ** 2 * self.prior['cov'][l])
         obj = np.log(temp)
         return obj
@@ -167,15 +177,16 @@ class FrankWolf:
                     obj1 = 0
                     obj2 = 0
                     for j in range(samples):
-                        n1 = N[j]
-                        n1[l][i] = t+1
+                        n1 = copy.deepcopy(N[j])
+                        n1[l][i] = t + 1
                         obj1 += self.objG(n1, l)
-                        n2 = N[j]
+                        n2 = copy.deepcopy(N[j])
                         n2[l][i] = t
                         obj2 += self.objG(n2, l)
                     obj1 /= samples
                     obj2 /= samples
-                    gradient += (obj1 - obj2) * Y[l][i]**t * T**(t+1) / np.math.factorial(t) * np.exp(-Y[l][i]*T)
+                    gradient += (obj1 - obj2) * Y[l][i] ** t * T ** (t + 1) / np.math.factorial(t) * np.exp(
+                        -Y[l][i] * T)
                 Z[l][i] = gradient
         return Z
 
@@ -185,7 +196,6 @@ class FrankWolf:
                 Y[l][i] += gamma * D[l][i]
 
     def FW(self, iterations, head, samples, T, routing):
-
 
         # Y = np.zeros(self.problem_size)
         Y = {}
@@ -198,6 +208,7 @@ class FrankWolf:
             Z = self.Estimate_Gradient(Y, head, samples, T)
             D = self.find_max(Z, routing)
             self.adapt(Y, D, gamma)
+            print(Y)
 
         return Y
 
