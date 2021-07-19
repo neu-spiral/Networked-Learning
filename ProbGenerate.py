@@ -7,7 +7,7 @@ import logging, argparse
 import random
 
 class Problem:
-    def __init__(self, sources, learners, catalog, bandwidth, G, paths, features, prior):
+    def __init__(self, sources, learners, catalog, bandwidth, G, paths, features, prior, T):
         self.sources = sources
         self.learners = learners
         self.catalog = catalog
@@ -16,6 +16,7 @@ class Problem:
         self.paths = paths
         self.features = features
         self.prior = prior
+        self.T = T
 
 
 def main():
@@ -39,6 +40,7 @@ def main():
     parser.add_argument('--graph_p', default=0.10, type=int, help='Probability, used in erdos_renyi, watts_strogatz')
     parser.add_argument('--random_seed', default=19930101, type=int, help='Random seed')
     parser.add_argument('--debug_level', default='INFO', type=str, help='Debug Level',choices=['INFO', 'DEBUG', 'WARNING', 'ERROR'])
+    parser.add_argument('--T', default=10, type=float, help="Duration of experiment")
 
     args = parser.parse_args()
 
@@ -157,7 +159,7 @@ def main():
         # prior['cov'][l] = np.dot(matrix, matrix.transpose())
 
 
-    P = Problem(sources, learners, catalog, bandwidth, G, [], features, prior)
+    P = Problem(sources, learners, catalog, bandwidth, G, [], features, prior, args.T)
     fname = 'Problem'
     with open(fname, 'wb') as f:
         pickle.dump(P, f)
