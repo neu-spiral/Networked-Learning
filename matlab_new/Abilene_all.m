@@ -36,20 +36,41 @@ X = abs(randn([p,d]));
 % Source rates, need to consider different types
 lambda_s = zeros(S,p,Tao);
 for tao = 1:Tao
-    lambda_s(:,:,tao) = 1.5*rand([S,p]);
+    lambda_s(:,:,tao) = 3*rand([S,p]);
 end
 
 % We can also have different sigma for different type
 sigma = rand;
 
+% Initialize orthogonal prior covariance 
+Help = zeros(L,d);
+for l = 1:L
+    Help(l,:) = abs(randn(1,d));
+end
+for i = 1:d
+    temp = max(Help(:,i));
+    for l = 1:L
+        if Help(l,i) == temp
+            Help(l,i) = 0.9 + 0.1*rand;
+        else
+            Help(l,i) = 0.1*rand;
+        end
+    end
+end
+
 Sigma = cell(L,1);
 for l = 1:L
-    Sigma{l} = 2*diag(abs(randn(d,1)));
+    Sigma{l} = diag(Help(l,:));
 end
+
+% Sigma = cell(L,1);
+% for l = 1:L
+%     Sigma{l} = 2*diag(abs(randn(d,1)));
+% end
 
 K = 100;
 delta = 1/K;
-n_sample = 40;
+n_sample = 30;
 t_prime = 15;
 
 % Find all incoming edges of learner No.1
@@ -193,4 +214,4 @@ Cap_time_PG = toc
 end
 
 
-save('Abilene_type_new_source.mat')
+save('Abilene_type_orth.mat')

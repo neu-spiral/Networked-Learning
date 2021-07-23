@@ -28,7 +28,7 @@ cvx_begin quiet
     maximize(gain);
     subject to
         for e=1:E
-            sum(lambda_e(e,:,:)) <= TW(e);
+            sum(sum(lambda_e(e,:,:))) <= TW(e);
         end
         
         for s=1:S
