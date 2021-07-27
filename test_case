@@ -1,0 +1,4 @@
+try x: 0-0.1, 0.9-1  covariance: 0-0.1, 0.9-1
+try x: 0-0.1, 50-100  covariance: 0-0.1, 100-200
+try x: 0-1, 1000-2000  covariance: 0-1, 1000-2000
+try x: 0-1, 10000-20000  covariance: 0-1, 10000-20000

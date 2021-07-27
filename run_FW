@@ -1,0 +1,11 @@
+#! /bin/bash
+
+for graph_type in geant abilene dtelekom balanced_tree hypercube star erdos_renyi
+do
+    sbatch ../script.sh FrankWolf.py --graph_type $graph_type
+done
+
+#for graph_type in geant abilene dtelekom balanced_tree hypercube star erdos_renyi
+#do
+#    sbatch ../script.sh FrankWolf.py --graph_type $graph_type
+#done

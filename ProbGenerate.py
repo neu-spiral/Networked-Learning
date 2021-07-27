@@ -7,7 +7,7 @@ import logging, argparse
 import random
 
 class Problem:
-    def __init__(self, sources, learners, catalog, bandwidth, G, paths, features, prior, T):
+    def __init__(self, sources, learners, catalog, bandwidth, G, paths, features, prior, T, types):
         self.sources = sources
         self.learners = learners
         self.catalog = catalog
@@ -17,22 +17,23 @@ class Problem:
         self.features = features
         self.prior = prior
         self.T = T
+        self.types = types
 
 
 def main():
     parser = argparse.ArgumentParser(description='Simulate a Network',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('--min_bandwidth', default=0.2, type=float, help='Minimum bandwidth of each edge')
-    parser.add_argument('--max_bandwidth', default=1.0, type=float, help="Maximum bandwidth of each edge")
+    parser.add_argument('--min_bandwidth', default=10, type=float, help='Minimum bandwidth of each edge')
+    parser.add_argument('--max_bandwidth', default=20, type=float, help="Maximum bandwidth of each edge")
 
-    parser.add_argument('--min_datarate', default=0.2, type=float, help='Minimum data rate of each item at each sources')
-    parser.add_argument('--max_datarate', default=1.0, type=float, help="Maximum bandwidth of each edge")
+    parser.add_argument('--min_datarate', default=100, type=float, help='Minimum data rate of each item at each sources')
+    parser.add_argument('--max_datarate', default=200, type=float, help="Maximum bandwidth of each edge")
 
     parser.add_argument('--catalog_size', default=20, type=int, help='Catalog size')
+    parser.add_argument('--types', default=3, type=int, help='Number of types')
     parser.add_argument('--learners', default=3, type=int, help='Number of learner')
     parser.add_argument('--sources', default=3, type=int, help='Number of nodes generating data')
-    parser.add_argument('--noice', default=0.01, type=float, help="variance of the noice")
-
+    parser.add_argument('--dimension', default=20, type=int, help='Feature dimension')
 
     parser.add_argument('--graph_type', default="erdos_renyi", type=str, help='Graph type',choices=['erdos_renyi', 'balanced_tree', 'hypercube', "cicular_ladder", "cycle", "grid_2d",'lollipop', 'expander', 'hypercube', 'star', 'barabasi_albert', 'watts_strogatz','regular', 'powerlaw_tree', 'small_world', 'geant', 'abilene', 'dtelekom','servicenetwork'])
     parser.add_argument('--graph_size', default=100, type=int, help='Network size')
@@ -120,14 +121,6 @@ def main():
     logging.info('Generating catalog')
     catalog = list(range(args.catalog_size))
 
-    logging.info('Generating sources')
-    sources_set = np.random.choice(range(graph_size), args.sources)
-    sources = {}
-    for s in sources_set:
-        sources[s] = {}
-        for i in catalog:
-            sources[s][i] = random.uniform(args.min_datarate, args.max_datarate)
-
     logging.info('Generating learners')
     learners = np.random.choice(range(graph_size), args.learners)
 
@@ -138,29 +131,54 @@ def main():
 
     logging.info('Generating features')
     features = {}
-    dimension = 20 # dimension of the feature
     for i in catalog:
-        features[i] = np.random.rand(dimension)
+        features[i] = np.random.uniform(0, 0.1, (args.dimension,1))
+        upper = int(np.floor(args.dimension / len(learners)))
+        j = np.random.randint(args.dimension-upper)
+        features[i][j:j+upper] = np.random.uniform(1000, 2000, (upper,1))
+        # features[i] = np.random.rand(args.dimension,1)
+
+    logging.info('Generating types')
+    types = dict(zip(learners, range(args.types)))
 
     logging.info('Generating prior')
     prior = {}
-    prior['noice'] = args.noice
+    prior['noice'] = {}
     prior['cov'] = {}
+    i = 0
+    noice = np.random.rand(args.types)
     for l in learners:
         # covariance is PSD
 
-        A = np.random.rand(dimension, dimension)
-        B = np.dot(A, A.transpose())
-        C = B + B.T  # makesure symmetric
-
-        prior['cov'][l] = C
+        # A = np.random.rand(dimension, dimension)
+        # B = np.dot(A, A.transpose())
+        # C = B + B.T  # makesure symmetric
+        #
+        # prior['cov'][l] = C
 
         # matrix = np.random.rand(dimension, 1)
         # prior['cov'][l] = np.dot(matrix, matrix.transpose())
 
+        diag = np.random.uniform(0, 1, args.dimension)
+        upper = np.floor(args.dimension/len(learners))
+        j = int(i+upper)
+        diag[i:j] = np.random.uniform(1000, 2000, j-i)
+        prior['cov'][l] = np.diag(diag)
+        prior['noice'][l] = noice[types[l]]
+        i = j
 
-    P = Problem(sources, learners, catalog, bandwidth, G, [], features, prior, args.T)
-    fname = 'Problem'
+    logging.info('Generating sources')
+    sources_set = np.random.choice(range(graph_size), args.sources)
+    sources = {}
+    for s in sources_set:
+        sources[s] = {}
+        for i in catalog:
+            sources[s][i] = {}
+            for t in set(types.values()):
+                sources[s][i][t] = np.random.uniform(args.min_datarate, args.max_datarate, 1)
+
+    P = Problem(sources, learners, catalog, bandwidth, G, [], features, prior, args.T, types)
+    fname = 'Problem_/Problem_' + args.graph_type
     with open(fname, 'wb') as f:
         pickle.dump(P, f)
 

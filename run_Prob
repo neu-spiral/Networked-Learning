@@ -1,0 +1,11 @@
+#! /bin/bash
+
+for graph_type in geant abilene dtelekom
+do
+    sbatch ../script.sh ProbGenerate.py --graph_type $graph_type
+done
+
+for graph_type in erdos_renyi balanced_tree hypercube star
+do
+    sbatch ../script.sh ProbGenerate.py --graph_type $graph_type --learners 5 --sources 10 --types 5
+done
