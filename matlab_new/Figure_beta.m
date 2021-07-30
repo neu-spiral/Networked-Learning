@@ -10,7 +10,7 @@
 % 
 % U(0, X, sigma, Sigma, T)
 
-beta = randn(d,1);
+%beta = randn(d,1);
 
 beta1 = cell(l,NC);
 beta2 = cell(l,NC);
@@ -24,29 +24,29 @@ PGVector = zeros(1,4);
 
 
 
-% % Figure for capacity beta
-% for i=1:4
-%     for j = 1: 10000
-%     
-%     SumVector(i) = SumVector(i) + norm(beta - Beta(Cap_Sum{i}, X, sigma, Sigma, T, beta, 2, 1)) + norm(beta - Beta(Cap_Sum{i}, X, sigma, Sigma, T, beta, 2, 2));
-%     AlphaVector(i) = AlphaVector(i) + norm(beta - Beta(Cap_Alpha{i}, X, sigma, Sigma, T, beta, 2, 1)) + norm(beta - Beta(Cap_Alpha{i}, X, sigma, Sigma, T, beta, 2, 2));
-%     FWVector(i) = FWVector(i) + norm(beta - Beta(Cap_FW{i}, X, sigma, Sigma, T, beta, 2, 1)) + norm(beta - Beta(Cap_FW{i}, X, sigma, Sigma, T, beta, 2, 2));
-%     PGVector(i) = PGVector(i) + norm(beta - Beta(Cap_GP{i}, X, sigma, Sigma, T, beta, 2, 1)) + norm(beta - Beta(Cap_GP{i}, X, sigma, Sigma, T, beta, 2, 2));
-%     
-%     end
-% end
-
 % Figure for capacity beta
 for i=1:4
     for j = 1: 10000
     
-    SumVector(i) = SumVector(i) + norm(beta - Beta(Cap_Sum{i}, X, sigma, Sigma, T, beta, 2, 1));
-    AlphaVector(i) = AlphaVector(i) + norm(beta - Beta(Cap_Alpha{i}, X, sigma, Sigma, T, beta, 2, 1));
-    FWVector(i) = FWVector(i) + norm(beta - Beta(Cap_FW{i}, X, sigma, Sigma, T, beta, 2, 1));
-    PGVector(i) = PGVector(i) + norm(beta - Beta(Cap_GP{i}, X, sigma, Sigma, T, beta, 2, 1));
+    SumVector(i) = SumVector(i) + norm(Help(1,:)' - Beta(Cap_Sum{i}, X, sigma, Sigma, T, Help(1,:)', 2, 1)) + norm(Help(2,:)' - Beta(Cap_Sum{i}, X, sigma, Sigma, T, Help(2,:)', 2, 2));
+    AlphaVector(i) = AlphaVector(i) + norm(Help(1,:)' - Beta(Cap_Alpha{i}, X, sigma, Sigma, T, Help(1,:)', 2, 1)) + norm(Help(2,:)' - Beta(Cap_Alpha{i}, X, sigma, Sigma, T, Help(2,:)', 2, 2));
+    FWVector(i) = FWVector(i) + norm(Help(1,:)' - Beta(Cap_FW{i}, X, sigma, Sigma, T, Help(1,:)', 2, 1)) + norm(Help(2,:)' - Beta(Cap_FW{i}, X, sigma, Sigma, T, Help(2,:)', 2, 2));
+    PGVector(i) = PGVector(i) + norm(Help(1,:)' - Beta(Cap_GP{i}, X, sigma, Sigma, T, Help(1,:)', 2, 1)) + norm(Help(2,:)' - Beta(Cap_GP{i}, X, sigma, Sigma, T, Help(2,:)', 2, 2));
     
     end
 end
+
+% % Figure for capacity beta
+% for i=1:4
+%     for j = 1: 10000
+%     
+%     SumVector(i) = SumVector(i) + norm(beta - Beta(Cap_Sum{i}, X, sigma, Sigma, T, beta, 2, 1));
+%     AlphaVector(i) = AlphaVector(i) + norm(beta - Beta(Cap_Alpha{i}, X, sigma, Sigma, T, beta, 2, 1));
+%     FWVector(i) = FWVector(i) + norm(beta - Beta(Cap_FW{i}, X, sigma, Sigma, T, beta, 2, 1));
+%     PGVector(i) = PGVector(i) + norm(beta - Beta(Cap_GP{i}, X, sigma, Sigma, T, beta, 2, 1));
+%     
+%     end
+% end
 
 SumVector = SumVector/10000;
 AlphaVector = AlphaVector/10000;
@@ -85,10 +85,10 @@ set(gca,'FontSize',16)
 for i=1:4
     for j = 1: 10000
     
-    SumVector(i) = SumVector(i) + norm(beta - Beta(S_Sum{i}, X, sigma, Sigma, T, beta, 2, 1));
-    AlphaVector(i) = AlphaVector(i) + norm(beta - Beta(S_Alpha{i}, X, sigma, Sigma, T, beta, 2, 1));
-    FWVector(i) = FWVector(i) + norm(beta - Beta(S_FW{i}, X, sigma, Sigma, T, beta, 2, 1));
-    PGVector(i) = PGVector(i) + norm(beta - Beta(S_GP{i}, X, sigma, Sigma, T, beta, 2, 1));
+    SumVector(i) = SumVector(i) + norm(Help(1,:)' - Beta(S_Sum{i}, X, sigma, Sigma, T, Help(1,:)', 2, 1)) + norm(Help(2,:)' - Beta(S_Sum{i}, X, sigma, Sigma, T, Help(2,:)', 2, 2));
+    AlphaVector(i) = AlphaVector(i) + norm(Help(1,:)' - Beta(S_Alpha{i}, X, sigma, Sigma, T, Help(1,:)', 2, 1)) + norm(Help(2,:)' - Beta(S_Alpha{i}, X, sigma, Sigma, T, Help(2,:)', 2, 2));
+    FWVector(i) = FWVector(i) + norm(Help(1,:)' - Beta(S_FW{i}, X, sigma, Sigma, T, Help(1,:)', 2, 1)) + norm(Help(2,:)' - Beta(S_FW{i}, X, sigma, Sigma, T, Help(2,:)', 2, 2));
+    PGVector(i) = PGVector(i) + norm(Help(1,:)' - Beta(S_GP{i}, X, sigma, Sigma, T, Help(1,:)', 2, 1)) + norm(Help(2,:)' - Beta(S_GP{i}, X, sigma, Sigma, T, Help(2,:)', 2, 2));
     
     end
 end
