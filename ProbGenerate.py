@@ -23,17 +23,17 @@ class Problem:
 def main():
     parser = argparse.ArgumentParser(description='Simulate a Network',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
-    parser.add_argument('--min_bandwidth', default=10, type=float, help='Minimum bandwidth of each edge')
-    parser.add_argument('--max_bandwidth', default=20, type=float, help="Maximum bandwidth of each edge")
+    parser.add_argument('--min_bandwidth', default=5, type=float, help='Minimum bandwidth of each edge')
+    parser.add_argument('--max_bandwidth', default=10, type=float, help="Maximum bandwidth of each edge")
 
-    parser.add_argument('--min_datarate', default=100, type=float, help='Minimum data rate of each item at each sources')
-    parser.add_argument('--max_datarate', default=200, type=float, help="Maximum bandwidth of each edge")
+    parser.add_argument('--min_datarate', default=2, type=float, help='Minimum data rate of each item at each sources')
+    parser.add_argument('--max_datarate', default=5, type=float, help="Maximum bandwidth of each edge")
 
     parser.add_argument('--catalog_size', default=20, type=int, help='Catalog size')
     parser.add_argument('--types', default=3, type=int, help='Number of types')
     parser.add_argument('--learners', default=3, type=int, help='Number of learner')
     parser.add_argument('--sources', default=3, type=int, help='Number of nodes generating data')
-    parser.add_argument('--dimension', default=20, type=int, help='Feature dimension')
+    parser.add_argument('--dimension', default=100, type=int, help='Feature dimension')
 
     parser.add_argument('--graph_type', default="erdos_renyi", type=str, help='Graph type',choices=['erdos_renyi', 'balanced_tree', 'hypercube', "cicular_ladder", "cycle", "grid_2d",'lollipop', 'expander', 'hypercube', 'star', 'barabasi_albert', 'watts_strogatz','regular', 'powerlaw_tree', 'small_world', 'geant', 'abilene', 'dtelekom','servicenetwork'])
     parser.add_argument('--graph_size', default=100, type=int, help='Network size')
@@ -97,7 +97,7 @@ def main():
     random.seed(args.random_seed)
     np.random.seed(args.random_seed + 2021)
 
-    logging.info('Generating graph')
+    logging.info('Generating ' + args.graph_type + ' graph')
     temp_graph = graphGenerator()  # use networkx to generate a graph
     # networkx.draw(temp_graph)
     # plt.draw()
@@ -132,10 +132,11 @@ def main():
     logging.info('Generating features')
     features = {}
     for i in catalog:
-        features[i] = np.random.uniform(0, 0.1, (args.dimension,1))
+        # features[i] = np.random.uniform(0, 0.1, (args.dimension,1))
+        features[i] = np.zeros((args.dimension,1))
         upper = int(np.floor(args.dimension / len(learners)))
-        j = np.random.randint(args.dimension-upper)
-        features[i][j:j+upper] = np.random.uniform(1000, 2000, (upper,1))
+        j = (i % len(learners))*upper
+        features[i][j:j+upper] = np.random.uniform(1, 2, (upper,1))
         # features[i] = np.random.rand(args.dimension,1)
 
     logging.info('Generating types')
@@ -145,8 +146,9 @@ def main():
     prior = {}
     prior['noice'] = {}
     prior['cov'] = {}
+    prior['beta'] = {}
     i = 0
-    noice = np.random.rand(args.types)
+    noice = np.random.uniform(0.5,1,args.types)
     for l in learners:
         # covariance is PSD
 
@@ -159,12 +161,15 @@ def main():
         # matrix = np.random.rand(dimension, 1)
         # prior['cov'][l] = np.dot(matrix, matrix.transpose())
 
-        diag = np.random.uniform(0, 1, args.dimension)
+        diag = np.random.uniform(0, 0.01, args.dimension)
         upper = np.floor(args.dimension/len(learners))
         j = int(i+upper)
-        diag[i:j] = np.random.uniform(1000, 2000, j-i)
+        diag[i:j] = np.random.uniform(100, 200, j-i)
         prior['cov'][l] = np.diag(diag)
         prior['noice'][l] = noice[types[l]]
+        # prior['noice'][l] = 0.1
+        prior['beta'][l] = np.zeros((args.dimension,1))
+        prior['beta'][l][i:j] = np.ones((j-i,1))
         i = j
 
     logging.info('Generating sources')
@@ -178,7 +183,8 @@ def main():
                 sources[s][i][t] = np.random.uniform(args.min_datarate, args.max_datarate, 1)
 
     P = Problem(sources, learners, catalog, bandwidth, G, [], features, prior, args.T, types)
-    fname = 'Problem_/Problem_' + args.graph_type
+    fname = 'Problem_smallrate/Problem_' + args.graph_type
+    logging.info('Save in ' + fname)
     with open(fname, 'wb') as f:
         pickle.dump(P, f)
 

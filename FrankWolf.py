@@ -26,12 +26,12 @@ class Gradient:
         temp = 0
         for i in self.catalog:
             temp += n[i] * np.dot(self.features[i], self.features[i].transpose())
-        temp1 = np.linalg.det(temp / self.prior['noice'][l])
-        temp2 = np.linalg.det(np.linalg.inv(self.prior['cov'][l]))
-        temp1 = np.log(temp1)
-        temp2 = np.log(temp2)
-
-        temp = np.linalg.det(temp / self.prior['noice'][l] + np.linalg.inv(self.prior['cov'][l]))
+        # temp1 = np.linalg.det(temp / self.prior['noice'][l])
+        # temp2 = np.linalg.det(np.linalg.inv(self.prior['cov'][l]))
+        # temp1 = np.log(temp1)
+        # temp2 = np.log(temp2)
+        temp = temp / self.prior['noice'][l] + np.linalg.inv(self.prior['cov'][l])
+        temp = np.linalg.det(temp)
         obj = np.log(temp)
         return obj
 
@@ -223,6 +223,10 @@ class FrankWolf(Gradient):
         for l in self.learners:
             for i in self.catalog:
                 D[l][i] = D[l][i].value if D[l][i].value>=0 else 0.
+        for e in self.G.edges():
+            for i in self.catalog:
+                for t in set(self.types.values()):
+                    D[e][i][t] = D[e][i][t].value if D[e][i][t].value>=0 else 0.
         return D
 
     def alg(self, iterations, head, samples, routing='hop'):
@@ -238,7 +242,7 @@ class FrankWolf(Gradient):
             Z = self.Estimate_Gradient(Y, head, samples)
             D = self.find_max(Z, routing)
             self.adapt(Y, D, gamma)
-            print(t, Y)
+            print(t)
 
         return Y
 
@@ -385,7 +389,7 @@ class ProjectAscent(Gradient):
             Z = self.Estimate_Gradient(Y, head, samples)
             self.adapt(Y, Z, 1./(t+1))
             Y = self.project(Y, routing)
-            print(t, Y)
+            print(t)
 
         return Y
 
@@ -562,39 +566,72 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Run algorithm',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('--graph_type', default="erdos_renyi", type=str, help='Graph type',choices=['erdos_renyi', 'balanced_tree', 'hypercube', "cicular_ladder", "cycle", "grid_2d",'lollipop', 'expander', 'hypercube', 'star', 'barabasi_albert', 'watts_strogatz','regular', 'powerlaw_tree', 'small_world', 'geant', 'abilene', 'dtelekom','servicenetwork'])
+    parser.add_argument('--debug_level', default='INFO', type=str, help='Debug Level',choices=['INFO', 'DEBUG', 'WARNING', 'ERROR'])
+
     args = parser.parse_args()
-    fname = 'Problem_noice/Problem_' + args.graph_type
-    print('Read data from '+fname)
+
+    args.debug_level = eval("logging." + args.debug_level)
+    logging.basicConfig(level=args.debug_level)
+    fname = 'Problem_smallrate/Problem_' + args.graph_type
+    logging.info('Read data from '+fname)
     with open(fname, 'rb') as f:
         P = pickle.load(f)
     alg1 = FrankWolf(P)
-    Y1 = alg1.alg(iterations=50, head=100, samples=20)
+    # n = np.random.uniform(10,10,len(P.catalog))
+
+    # n_zero = np.zeros(len(P.catalog))
+    # n = copy.deepcopy(n_zero)
+    # n[0:6] = np.random.uniform(100, 100, 6)
+    # test1 = alg1.objG(n, P.learners[0])-alg1.objG(n_zero, P.learners[0])
+    # test2 = alg1.objG(n, P.learners[1])-alg1.objG(n_zero, P.learners[1])
+    # test3 = alg1.objG(n, P.learners[2])-alg1.objG(n_zero, P.learners[2])
+
+    fname = 'Result_smallrate/Result_' + args.graph_type
+    logging.info('Read data from '+fname)
+    with open(fname, 'rb') as f:
+        P = pickle.load(f)
+    Y1 = P[0][0]
+    obj1 = alg1.objU(Y1, 100)
+
+    Y2 = P[1][0]
+    obj2 = alg1.objU(Y2, 100)
+
+
+
+    Y1 = alg1.alg(iterations=50, head=50, samples=20)
     obj1 = alg1.objU(Y=Y1, samples=100)
+    print(Y1)
 
     alg2 = NeededRate(P)
     Y2 = alg2.solve(0)
     obj2 = alg1.objU(Y=Y2, samples=100)
+    print(Y2)
+
 
     alg2 = NeededRate(P) # returned Y will cover the original variable
-    Y3 = alg2.solve(2.0)
+    Y3 = alg2.solve(5.0)
     obj3 = alg1.objU(Y=Y3, samples=100)
+    print(Y3)
 
     alg3 = AllRate(P)
     Y4 = alg3.solve(0)
     obj4 = alg1.objU(Y=Y4, samples=100)
+    print(Y4)
 
     alg3 = AllRate(P)
-    Y5 = alg3.solve(2.0)
+    Y5 = alg3.solve(5.0)
     obj5 = alg1.objU(Y=Y5, samples=100)
+    print(Y5)
 
     alg4 = ProjectAscent(P)
-    Y6 = alg4.alg(iterations=20, head=100, samples=20)
+    Y6 = alg4.alg(iterations=20, head=50, samples=20)
     obj6 = alg1.objU(Y=Y6, samples=100)
+    print(Y6)
 
     print(obj1, obj2, obj3, obj4, obj5, obj6)
 
-    fname = 'Result_noice/Result_' + args.graph_type
-    print('Save in ' + fname)
+    fname = 'Result_smallrate/Result_' + args.graph_type
+    logging.info('Save in ' + fname)
     with open(fname, 'wb') as f:
         pickle.dump([(Y1, obj1), (Y2, obj2), (Y3, obj3), (Y4, obj4), (Y5, obj5), (Y6, obj6)], f)
 
