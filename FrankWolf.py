@@ -586,19 +586,8 @@ if __name__ == '__main__':
     # test2 = alg1.objG(n, P.learners[1])-alg1.objG(n_zero, P.learners[1])
     # test3 = alg1.objG(n, P.learners[2])-alg1.objG(n_zero, P.learners[2])
 
-    fname = 'Result_smallrate/Result_' + args.graph_type
-    logging.info('Read data from '+fname)
-    with open(fname, 'rb') as f:
-        P = pickle.load(f)
-    Y1 = P[0][0]
-    obj1 = alg1.objU(Y1, 100)
 
-    Y2 = P[1][0]
-    obj2 = alg1.objU(Y2, 100)
-
-
-
-    Y1 = alg1.alg(iterations=50, head=50, samples=20)
+    Y1 = alg1.alg(iterations=20, head=20, samples=20)
     obj1 = alg1.objU(Y=Y1, samples=100)
     print(Y1)
 
@@ -624,13 +613,13 @@ if __name__ == '__main__':
     print(Y5)
 
     alg4 = ProjectAscent(P)
-    Y6 = alg4.alg(iterations=20, head=50, samples=20)
+    Y6 = alg4.alg(iterations=20, head=20, samples=20)
     obj6 = alg1.objU(Y=Y6, samples=100)
     print(Y6)
 
     print(obj1, obj2, obj3, obj4, obj5, obj6)
 
-    fname = 'Result_smallrate/Result_' + args.graph_type
+    fname = 'Result_smallrate/Result2_' + args.graph_type
     logging.info('Save in ' + fname)
     with open(fname, 'wb') as f:
         pickle.dump([(Y1, obj1), (Y2, obj2), (Y3, obj3), (Y4, obj4), (Y5, obj5), (Y6, obj6)], f)

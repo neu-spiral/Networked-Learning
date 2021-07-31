@@ -11,11 +11,11 @@ if __name__ == '__main__':
     parser.add_argument('--debug_level', default='INFO', type=str, help='Debug Level',choices=['INFO', 'DEBUG', 'WARNING', 'ERROR'])
 
     args = parser.parse_args()
-    np.random.seed(args.random_seed + 2021)
+    np.random.seed(args.random_seed + 2020)
     args.debug_level = eval("logging." + args.debug_level)
     logging.basicConfig(level=args.debug_level)
 
-    fname = 'Result_smallrate/Result_' + args.graph_type
+    fname = 'Result_smallrate/Result_more_' + args.graph_type
     logging.info('Read data from '+fname)
     with open(fname, 'rb') as f:
         results = pickle.load(f)
@@ -39,25 +39,30 @@ if __name__ == '__main__':
         result = results[r][0]
         dist = 0
         for l in learners:
-            map_l = 0
+            norm = 0
             for j in range(samples):
                 a = 0
                 b = 0
                 for i in catalog:
                     n = np.random.poisson(result[l][i] * T)
                     a += n * np.dot(X[i], X[i].transpose())
-                    b += n * X[i] * (np.dot(X[i].transpose(), beta[l]) + np.random.normal(0,noice[l]))
+                    for k in range(n):
+                        y = np.dot(X[i].transpose(), beta[l]) + np.random.normal(0,noice[l])
+                        if y < 0:
+                            pass
+                        b += X[i] * y
                 temp1 = a + noice[l]*np.linalg.inv(covariance[l])
                 temp1 = np.linalg.inv(temp1)
                 # temp2 = np.dot(np.linalg.inv(covariance[l]), beta0[l])
                 # map_l = np.dot(temp1, b) + np.dot(temp1, temp2)*noice[l]
 
-                map_l += np.dot(temp1, b)
-            map_l /= samples
-            dist += np.linalg.norm(map_l-beta[l])
+                map_l = np.dot(temp1, b)
+                norm += np.linalg.norm(map_l-beta[l])
+            norm /= samples
+            dist += norm
         distance.append(dist)
     print(distance)
-    fname = 'Result_smallrate/beta_' + args.graph_type
+    fname = 'Result_smallrate/beta_more_' + args.graph_type
     logging.info('Save in ' + fname)
     with open(fname, 'wb') as f:
         pickle.dump(distance, f)
