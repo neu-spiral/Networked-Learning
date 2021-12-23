@@ -6,5 +6,5 @@ This repo includes the MATLAB implementation of our algorithms/simulations.
 * Install CVX (see [this link](http://cvxr.com/cvx/)).
 
 ### Usage
-* `autoRunning.m`
-* `Figure.m` and `Figure_beta.m`
+* First, run `autoRunning.m`, which provides an interface to make configurations. It calls `main_simulation` which is the main function of the simulation.
+* Then, run `Figure.m` and `Figure_beta.m` to draw figures for utility and estimation error comparisons, respectively.
