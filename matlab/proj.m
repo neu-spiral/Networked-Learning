@@ -1,9 +1,10 @@
-function vk = proj(TWINDi,TWINDj,TW,V,lambda_infeas,grad,Learner,Source,lambda_s)
+function vk = proj(TWINDi,TWINDj,TW,V,lambda_infeas,grad,Learner,Source,lambda_s,t_l)
 %proj Projection
 %   Detailed explanation goes here
 
 [L, p] = size(grad);
 E = length(TW);
+[~,~,Tao] = size(lambda_s); 
 S = length(Source);
 Nodes = 1:V;
 Med = setdiff(Nodes,Source);
@@ -12,24 +13,26 @@ M = length(Med);
 
 cvx_begin quiet
     variable vk(L,p);
-    variable lambda_e(E,p);
+    variable lambda_e(E,p,Tao);
     gain=norm(lambda_infeas - vk);
             
     minimize(gain);
     subject to
         for e=1:E
-            sum(lambda_e(e,:)) <= TW(e);
+            sum(sum(lambda_e(e,:,:))) <= TW(e);
         end
         
         for s=1:S
             out_s = find(TWINDi == Source(s));
             n_s = length(out_s);
             for i=1:p
-                sum_si = 0;
-                for ns = 1:n_s
-                    sum_si = sum_si + lambda_e(out_s(ns),i);
+                for tao = 1:Tao
+                    sum_si = 0;
+                    for ns = 1:n_s
+                        sum_si = sum_si + lambda_e(out_s(ns),i,tao);
+                    end
                 end
-                sum_si <= lambda_s(s,i);
+                sum_si <= lambda_s(s,i,tao);
             end
         end
         
@@ -39,7 +42,7 @@ cvx_begin quiet
             for i=1:p
                 sum_li = 0;
                 for nl = 1:n_l
-                    sum_li = sum_li + lambda_e(in_l(nl),i);
+                    sum_li = sum_li + lambda_e(in_l(nl),i,t_l(l));
                 end
                 vk(l,i) == sum_li; 
             end
@@ -51,15 +54,17 @@ cvx_begin quiet
             in_m = find(TWINDj == Med(m));
             n_m_i = length(in_m);
             for i=1:p
-               sum_in = 0;
-               sum_out = 0;
-               for nmi = 1:n_m_i
-                   sum_in = sum_in + lambda_e(in_m(nmi),i);
-               end
-               for nmo = 1:n_m_o
-                   sum_out = sum_out + lambda_e(out_m(nmo),i);
-               end
-               sum_out <= sum_in;
+                for tao = 1:Tao
+                    sum_in = 0;
+                    sum_out = 0;
+                    for nmi = 1:n_m_i
+                        sum_in = sum_in + lambda_e(in_m(nmi),i,tao);
+                    end
+                    for nmo = 1:n_m_o
+                        sum_out = sum_out + lambda_e(out_m(nmo),i,tao);
+                    end
+                    sum_out <= sum_in;
+                end
             end
         end
         

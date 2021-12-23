@@ -9,24 +9,26 @@ lambda_max = max(max(lambda))*T;
 t_prime = ceil(lambda_max + max([t_prime, lambda_max]));
 
 for l = 1:L
-    for i = 1:p
-        w_li = 0;
-        for j = 1:n_sample
-            n = zeros(p,1);
-            for ii = 1:p
-               n(ii) = poissrnd(lambda(l,ii)); 
-            end
-            for t = 1:t_prime
+    for j = 1:n_sample
+        n = poissrnd(lambda(l,:)*T);
+        for i = 1:p
+            w_li = 0;
+            for t = 0:t_prime
                 nx = n;
                 nx(i) = t+1;
                 ny = n;
                 ny(i) = t;
                 w_li = w_li + (G(nx, X, sigma, Sigma{l}) - G(ny, X, sigma, Sigma{l})) * T * poisspdf(t,lambda(l,i)*T);
             end
+            if w_li < 0
+                wli
+            end
+            grad(l,i) = grad(l,i) + w_li;
         end
-        %w_li
-        grad(l,i) = w_li/n_sample;
     end
 end
+
+grad = grad/n_sample;
+
 end
 
