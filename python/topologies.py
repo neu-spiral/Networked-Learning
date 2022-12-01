@@ -1,4 +1,4 @@
-from networkx import Graph
+from networkx import Graph, DiGraph
 
 
 def Dtelekom():
@@ -468,3 +468,55 @@ def GEANT():
     G.add_edge("nodeJ", "nodeK")
     G.add_edge("nodeK", "nodeL")
     return G
+
+
+def ToyExample():
+    G = DiGraph()
+
+    G.add_node("node1")
+    G.add_node("node2")
+    G.add_node("node3")
+    G.add_node("node4")
+    G.add_node("node5")
+    G.add_node("node6")
+
+    G.add_edge("node5", "node3")
+    G.add_edge("node3", "node1")
+    G.add_edge("node3", "node4")
+    G.add_edge("node6", "node4")
+    G.add_edge("node4", "node2")
+
+    return G
+
+
+def ToyExample_parameters():
+    source_rates = {"node5": {"radar": 1, "video": 1}, "node6": {"video": 1.5}}
+    learner_types = {"node1": "radar", "node2": "video"}
+    bandwidths = {("node5", "node3"): 1, ("node3", "node1"): 1, ("node3", "node4"): 1, ("node6", "node4"): 1,
+                  ("node4", "node2"): 1.5}
+
+    return source_rates, learner_types, bandwidths
+
+
+def MNIST():
+    G = DiGraph()
+
+    G.add_node("node0")
+    G.add_node("node1")
+    G.add_node("node2")
+    G.add_node("node3")
+
+    G.add_edge("node2", "node0")
+    G.add_edge("node2", "node1")
+    G.add_edge("node3", "node0")
+    G.add_edge("node3", "node1")
+
+    return G
+
+
+def MNIST_parameters():
+    source_rates = {"node2": 10, "node3": 10}
+    learners = ["node0", "node1"]
+    bandwidths = {("node2", "node0"): 3, ("node2", "node1"): 3, ("node3", "node0"): 3, ("node3", "node1"): 3}
+
+    return source_rates, learners, bandwidths

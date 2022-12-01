@@ -6,6 +6,7 @@ import numpy as np
 import logging, argparse
 import random
 
+
 class Problem:
     def __init__(self, sources, learners, catalog, bandwidth, G, paths, features, prior, T, types):
         self.sources = sources
@@ -21,13 +22,14 @@ class Problem:
 
 
 def main():
-    parser = argparse.ArgumentParser(description='Simulate a Network',formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+    parser = argparse.ArgumentParser(description='Simulate a Network',
+                                     formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 
     parser.add_argument('--min_bandwidth', default=5, type=float, help='Minimum bandwidth of each edge')
     parser.add_argument('--max_bandwidth', default=10, type=float, help="Maximum bandwidth of each edge")
 
     parser.add_argument('--min_datarate', default=2, type=float, help='Minimum data rate of each item at each sources')
-    parser.add_argument('--max_datarate', default=5, type=float, help="Maximum bandwidth of each edge")
+    parser.add_argument('--max_datarate', default=5, type=float, help="Maximum bsandwidth of each edge")
 
     parser.add_argument('--catalog_size', default=20, type=int, help='Catalog size')
     parser.add_argument('--types', default=3, type=int, help='Number of types')
@@ -35,13 +37,19 @@ def main():
     parser.add_argument('--sources', default=3, type=int, help='Number of nodes generating data')
     parser.add_argument('--dimension', default=100, type=int, help='Feature dimension')
 
-    parser.add_argument('--graph_type', default="erdos_renyi", type=str, help='Graph type',choices=['erdos_renyi', 'balanced_tree', 'hypercube', "cicular_ladder", "cycle", "grid_2d",'lollipop', 'expander', 'hypercube', 'star', 'barabasi_albert', 'watts_strogatz','regular', 'powerlaw_tree', 'small_world', 'geant', 'abilene', 'dtelekom','servicenetwork'])
+    parser.add_argument('--graph_type', default="erdos_renyi", type=str, help='Graph type',
+                        choices=['erdos_renyi', 'balanced_tree', 'hypercube', "cicular_ladder", "cycle", "grid_2d",
+                                 'lollipop', 'expander', 'hypercube', 'star', 'barabasi_albert', 'watts_strogatz',
+                                 'regular', 'powerlaw_tree', 'small_world', 'geant', 'abilene', 'dtelekom',
+                                 'servicenetwork'])
     parser.add_argument('--graph_size', default=100, type=int, help='Network size')
-    parser.add_argument('--graph_degree', default=4, type=int, help='Degree. Used by balanced_tree, regular, barabasi_albert, watts_strogatz')
+    parser.add_argument('--graph_degree', default=4, type=int,
+                        help='Degree. Used by balanced_tree, regular, barabasi_albert, watts_strogatz')
     parser.add_argument('--graph_p', default=0.10, type=int, help='Probability, used in erdos_renyi, watts_strogatz')
     parser.add_argument('--random_seed', default=19930101, type=int, help='Random seed')
-    parser.add_argument('--debug_level', default='INFO', type=str, help='Debug Level',choices=['INFO', 'DEBUG', 'WARNING', 'ERROR'])
-    parser.add_argument('--T', default=10, type=float, help="Duration of experiment")
+    parser.add_argument('--debug_level', default='INFO', type=str, help='Debug Level',
+                        choices=['INFO', 'DEBUG', 'WARNING', 'ERROR'])
+    parser.add_argument('--T', default=1, type=float, help="Duration of experiment")
 
     args = parser.parse_args()
 
@@ -132,15 +140,20 @@ def main():
     logging.info('Generating features')
     features = {}
     for i in catalog:
-        # features[i] = np.random.uniform(0, 0.1, (args.dimension,1))
-        features[i] = np.zeros((args.dimension,1))
+        # features[i] = np.random.uniform(0, 0.01, (args.dimension,1))
+        features[i] = np.zeros((args.dimension, 1))
         upper = int(np.floor(args.dimension / len(learners)))
-        j = (i % len(learners))*upper
-        features[i][j:j+upper] = np.random.uniform(1, 2, (upper,1))
+        j = (i % len(learners)) * upper
+        features[i][j:j + upper] = np.random.uniform(1, 2, (upper, 1))
         # features[i] = np.random.rand(args.dimension,1)
 
     logging.info('Generating types')
-    types = dict(zip(learners, range(args.types)))
+    if args.learners <= args.types:
+        types_choice = list(range(args.learners))
+    if args.learners > args.types:
+        types_choice = list(range(args.types))
+        types_choice += random.choices(range(args.types), k=args.learners - args.types)
+    types = dict(zip(learners, types_choice))
 
     logging.info('Generating prior')
     prior = {}
@@ -148,7 +161,7 @@ def main():
     prior['cov'] = {}
     prior['beta'] = {}
     i = 0
-    noice = np.random.uniform(0.5,1,args.types)
+    noice = np.random.uniform(0.5, 1, args.types)
     for l in learners:
         # covariance is PSD
 
@@ -162,14 +175,14 @@ def main():
         # prior['cov'][l] = np.dot(matrix, matrix.transpose())
 
         diag = np.random.uniform(0, 0.01, args.dimension)
-        upper = np.floor(args.dimension/len(learners))
-        j = int(i+upper)
-        diag[i:j] = np.random.uniform(100, 200, j-i)
+        upper = np.floor(args.dimension / len(learners))
+        j = int(i + upper)
+        diag[i:j] = np.random.uniform(100, 200, j - i)
         prior['cov'][l] = np.diag(diag)
         prior['noice'][l] = noice[types[l]]
         # prior['noice'][l] = 0.1
-        prior['beta'][l] = np.zeros((args.dimension,1))
-        prior['beta'][l][i:j] = np.ones((j-i,1))
+        prior['beta'][l] = np.zeros((args.dimension, 1))
+        prior['beta'][l][i:j] = np.ones((j - i, 1))
         i = j
 
     logging.info('Generating sources')
@@ -183,12 +196,12 @@ def main():
                 sources[s][i][t] = np.random.uniform(args.min_datarate, args.max_datarate, 1)
 
     P = Problem(sources, learners, catalog, bandwidth, G, [], features, prior, args.T, types)
-    fname = 'Problem_smallrate/Problem_' + args.graph_type
+    fname = "Problem_{}/Problem_3_{}_{}learners_{}sources_{}types".format(int(args.min_bandwidth),
+        args.graph_type, args.learners, args.sources, args.types)
     logging.info('Save in ' + fname)
     with open(fname, 'wb') as f:
         pickle.dump(P, f)
 
+
 if __name__ == '__main__':
     main()
-
-

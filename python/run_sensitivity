@@ -1,0 +1,9 @@
+#! /bin/bash
+
+for change in source learner
+do
+  for graph_type in erdos_renyi balanced_tree hypercube star grid_2d small_world
+  do
+    sbatch ../script.sh plot_sensitivity.py --graph_type $graph_type --change $change --min_bandwidth 20
+  done
+done

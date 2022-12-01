@@ -1,11 +1,37 @@
 #! /bin/bash
 
+#for graph_type in geant abilene dtelekom
+#do
+#    sbatch ../script.sh ProbGenerate.py --graph_type $graph_type --learners 4 --sources 4 --types 4
+#done
+#
+#for graph_type in erdos_renyi balanced_tree hypercube star grid_2d small_world
+#do
+#    sbatch ../script.sh ProbGenerate.py --graph_type $graph_type --learners 10 --sources 20 --types 10
+#done
+#
+#for source in 10 30 40 50
+#  do
+#  for graph_type in erdos_renyi balanced_tree hypercube star grid_2d small_world
+#  do
+#      sbatch ../script.sh ProbGenerate.py --graph_type $graph_type --learners 10 --sources $source --types 10
+#  done
+#done
+#
+#for learner in 5 15 20 25
+#  do
+#  for graph_type in erdos_renyi balanced_tree hypercube star grid_2d small_world
+#  do
+#      sbatch ../script.sh ProbGenerate.py --graph_type $graph_type --learners $learner --sources 20 --types 10
+#  done
+#done
+
 for graph_type in geant abilene dtelekom
 do
-    sbatch ../script.sh ProbGenerate.py --graph_type $graph_type
+    sbatch ../script.sh ProbGenerate.py --graph_type $graph_type --learners 3 --sources 3 --types 3 --min_datarate 3 --max_datarate 3
 done
 
 for graph_type in erdos_renyi balanced_tree hypercube star grid_2d small_world
 do
-    sbatch ../script.sh ProbGenerate.py --graph_type $graph_type --learners 5 --sources 10 --types 5
+    sbatch ../script.sh ProbGenerate.py --graph_type $graph_type --learners 5 --sources 10 --types 5 --min_datarate 3 --max_datarate 3
 done

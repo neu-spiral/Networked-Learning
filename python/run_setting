@@ -1,0 +1,7 @@
+#! /bin/bash
+
+for graph_type in  erdos_renyi balanced_tree hypercube star grid_2d small_world #geant abilene dtelekom
+do
+  sbatch ../script.sh plot_setting.py --graph_type $graph_type
+done
+
