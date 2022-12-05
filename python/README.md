@@ -4,23 +4,17 @@
 
 Please cite this paper if you intend to use this code for your research.
 
-We implement both python version and matlab version of our algorithms.
+We implement both python version and matlab version of our algorithms. Here is the python version.
 
-* [Python version](#python)
-  * [Dependencies](#dependencies)
-  * [Usage](#usage)
+* [Dependencies](#dependencies)
+* [Usage](#usage)
   
 
-* [Matlab version](#matlab)
-
-
-## Python
-
-### Dependencies
+## Dependencies
 
 The dependencies are specified in the [``requirements.txt``](requirements.txt) file. 
 
-### Usage
+## Usage
 
 [``ProbGenerate.py``](ProbGenerate.py) is to initialize the problems over different networks/topologies. Some execution examples is shown in [``run_Prob.py``](run_Prob.py).
 
@@ -31,6 +25,3 @@ After solving the problem, we could use [``Beta.py``](Beta.py) to calculate the 
 [``plot_topology.py``](plot_topology.py) is to plot bar figures in the paper.
 
 
-## Matlab
-
-Usage of matlab version is in [``matlab/README.md``](matlab/README.md)
